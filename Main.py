@@ -9,7 +9,7 @@ import pickle
 
 from Data_Preparation import Collect_Stock_Data, Drop_Continuous_NaNs, Clean_NaN_Values, Calculate_Adjusted_Price, Calculate_RSI, Calculate_MACD, Calculate_Bollinger_Bands, Engineer_Features, Use_Market_Data, Merge_stock_with_Market, Build_DataFrames
 
-from Modeling import Read_Data, Finalize_df, Split_train_test, Model_with_LR, Model_with_OLS, Model_with_XGB, Model_with_RF, Save_Best_Model, Make_Pickle, Make_Predictions
+from Modeling import Read_Data, Finalize_df, Split_train_test, Model_with_LR, Model_with_XGB, Model_with_RF, Save_Best_Model, Make_Pickle, Make_Predictions
 
 def action1():
 

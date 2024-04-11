@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
@@ -126,7 +127,7 @@ def Model_with_LR(X_train, X_test, y_train, y_test):
     
     This function creates a Linear Regression model, fits it to the training data, and then uses the model
     to make predictions on the testing set. It evaluates the performance of the model by calculating the
-    mean squared error (MSE) and the R-squared (R2) score between the actual and predicted values for the target.
+    Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE) and the R-squared (R2) score between the actual and predicted values for the target.
     
     Parameters:
     - X_train (pd.DataFrame): The training dataset containing the features.
@@ -135,7 +136,7 @@ def Model_with_LR(X_train, X_test, y_train, y_test):
     - y_test (pd.Series): The testing dataset containing the target variable.
     
     Returns:
-    - tuple: Contains the fitted Linear Regression model, the MSE, and the R2 score.
+    - tuple: Contains the fitted Linear Regression model, the MSE, MAPE, and the R2 score.
     """
     
     # Initialize the Linear Regression model.
@@ -149,44 +150,14 @@ def Model_with_LR(X_train, X_test, y_train, y_test):
     # Evaluate the model's performance by calculating the Mean Squared Error and R-squared score.
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    
-    return LR, mse, r2
 
-def Model_with_OLS(X_train, X_test, y_train, y_test):
+    # Calculate the absolute percentage difference
+    absolute_percentage_differences = np.abs((y_test - y_pred) / y_test) * 100
+    # Calculate the mean of these absolute percentage differences
+    mape = np.mean(absolute_percentage_differences)
 
-    """
-    Initializes, fits, and evaluates an Ordinary Least Squares (OLS) regression model.
-    
-    This function extends the X_train and X_test datasets with a constant term to account for the intercept 
-    in the OLS model, fits the model to the training data, and evaluates its performance on the testing set 
-    by calculating both the mean squared error (MSE) and R-squared (R2) score.
-    
-    Parameters:
-    - X_train (pd.DataFrame): Training dataset containing the features.
-    - X_test (pd.DataFrame): Testing dataset containing the features.
-    - y_train (pd.Series): Training dataset containing the target variable.
-    - y_test (pd.Series): Testing dataset containing the target variable.
-    
-    Returns:
-    - tuple: Contains the fitted OLS model, the MSE, and the R2 score of the model on the testing set.
-    """
-    
-    # Extend the features matrix of the training set with a column for the constant term.
-    X_with_const = sm.add_constant(X_train)
-    
-    # Fit the OLS (Ordinary Least Squares) model
-    ols = sm.OLS(y_train, X_with_const).fit()
-    
-    # Extend the features matrix of the testing set with a column for the constant term.
-    X_test_with_const = sm.add_constant(X_test)
-    # Use the fitted model to make predictions on the extended testing set.
-    y_pred = ols.predict(X_test_with_const)
-    
-    # Evaluate the performance of the model on the testing set.
-    mse = mean_squared_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    
-    return ols, mse, r2
+    return LR, mse, r2, mape
+
 
 def Model_with_XGB(X_train, X_test, y_train, y_test):
 
@@ -195,7 +166,7 @@ def Model_with_XGB(X_train, X_test, y_train, y_test):
     
     This function creates an XGBoost regression model with specified hyperparameters, fits it to the 
     training data, and uses it to make predictions on the testing set. It evaluates the model's performance
-    by calculating the mean squared error (MSE) and R-squared (R2) score between the actual and predicted
+    by calculating the Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE) and R-squared (R2) score between the actual and predicted
     values for the target variable.
     
     Parameters:
@@ -205,7 +176,7 @@ def Model_with_XGB(X_train, X_test, y_train, y_test):
     - y_test (pd.Series): The testing dataset containing the target variable.
     
     Returns:
-    - tuple: Contains the fitted XGBoost model, the MSE, and the R2 score.
+    - tuple: Contains the fitted XGBoost model, the MSE, MAPE, and the R2 score.
     """
     
     # Initialize the XGBoost regressor model with specified hyperparameters.
@@ -220,8 +191,14 @@ def Model_with_XGB(X_train, X_test, y_train, y_test):
     # Evaluate the model's performance on the test data using Mean Squared Error and R-squared metrics.
     xgb_mse = mean_squared_error(y_test, xgb_pred)
     xgb_r2 = r2_score(y_test, xgb_pred)
+
+    # Calculate the absolute percentage difference
+    absolute_percentage_differences = np.abs((y_test - xgb_pred) / y_test) * 100
+    # Calculate the mean of these absolute percentage differences
+    mape = np.mean(absolute_percentage_differences)
+
+    return xgb_model, xgb_mse, xgb_r2, mape
     
-    return xgb_model, xgb_mse, xgb_r2
 
 def Model_with_RF(X_train, X_test, y_train, y_test):
 
@@ -230,7 +207,7 @@ def Model_with_RF(X_train, X_test, y_train, y_test):
     
     This function creates a Random Forest regression model with default hyperparameters, fits it to the
     training data, and uses it to make predictions on the testing set. It evaluates the model's performance
-    by calculating the mean squared error (MSE) and R-squared (R2) score between the actual and predicted
+    by calculating the Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE) and R-squared (R2) score between the actual and predicted
     values for the target variable.
     
     Parameters:
@@ -240,7 +217,7 @@ def Model_with_RF(X_train, X_test, y_train, y_test):
     - y_test (pd.Series): The testing dataset containing the target variable.
     
     Returns:
-    - tuple: Contains the fitted Random Forest model, the MSE, and the R2 score.
+    - tuple: Contains the fitted Random Forest model, the MSE, MAPE, and the R2 score.
     """
     
     # Initialize and fit the Random Forest regressor model to the training data.
@@ -253,18 +230,23 @@ def Model_with_RF(X_train, X_test, y_train, y_test):
     # Evaluate the model's performance on the test data using Mean Squared Error and R-squared metrics.
     mse_rf = mean_squared_error(y_test, y_pred_rf)
     r2_rf = r2_score(y_test, y_pred_rf)
-    
-    return rf_model, mse_rf, r2_rf
+
+    # Calculate the absolute percentage difference
+    absolute_percentage_differences = np.abs((y_test - y_pred_rf) / y_test) * 100
+    # Calculate the mean of these absolute percentage differences
+    mape = np.mean(absolute_percentage_differences)
+
+    return rf_model, mse_rf, r2_rf, mape
 
 def Save_Best_Model(X_train, X_test, y_train, y_test):
 
     """
     Evaluates multiple regression models on the given dataset, identifies the best performing model based on
-    mean squared error (MSE) and R-squared (R2) metrics, and pickles the best model if its R2 score is above 0.90.
+    mean squared error (MSE), Mean Absolute Percentage Error (MAPE) and R-squared (R2) metrics, and pickles the best model if its mape<= 5 and R2 score>= 0.60.
     
-    The function considers Linear Regression, OLS, XGBoost, and Random Forest models, comparing their performance
+    The function considers Linear Regression, XGBoost, and Random Forest models, comparing their performance
     on the given training and testing datasets. The best model is determined by the lowest MSE, with a tiebreaker
-    based on the highest R2 score.
+    based on the mape<= 5 and R2 score>= 0.60.
     
     Parameters:
     - X_train (pd.DataFrame): The training dataset containing the features.
@@ -273,7 +255,7 @@ def Save_Best_Model(X_train, X_test, y_train, y_test):
     - y_test (pd.Series): The testing dataset containing the target variable.
     
     Returns:
-    - The tuple of the best model, its MSE, and R2 score, if its R2 score is above 0.90; otherwise, None.
+    - The tuple of the best model, its MSE, MAPE, and R2 score, if its MAPE is below 5% and R2 score is above 0.60; otherwise, None.
     """
     
     # Initialize variables to store the best model and its metrics
@@ -283,43 +265,41 @@ def Save_Best_Model(X_train, X_test, y_train, y_test):
 
     # Generate models using predefined functions.
     Model_LR = Model_with_LR(X_train, X_test, y_train, y_test)
-    Model_OLS = Model_with_OLS(X_train, X_test, y_train, y_test)
     Model_XGB = Model_with_XGB(X_train, X_test, y_train, y_test)
     Model_RF = Model_with_RF(X_train, X_test, y_train, y_test)
 
     # List of models to evaluate
     models = {
         "Linear Regression": Model_LR,
-        "OLS": Model_OLS,
         "XGBoost": Model_XGB,
         "Random Forest": Model_RF
     }
 
     # Evaluate each model, updating the best model based on MSE and R2.
-    for model_name, (model, mse, r2) in models.items():
+    for model_name, (model, mse, r2, mape) in models.items():
 
         # Check if the current model has better performance than the best model found so far
         if mse < best_mse:
             best_model = model_name
             best_mse = mse
             best_r2 = r2
-
+            best_mape = mape
+            
     # Conditionally choose the best model if its performance is sufficiently high.
-    if best_r2>=0.90:
+    if best_mape<= 5 and best_r2>= 0.60:
         
         if best_model == "Linear Regression":
             model_to_pickle = Model_LR[0]
-        elif best_model == "OLS":
-            model_to_pickle = Model_OLS[0]
         elif best_model == "XGBoost":
             model_to_pickle = Model_XGB[0]
         elif best_model == "Random Forest":
             model_to_pickle = Model_RF[0]
 
     else:
-        print('Could not create model with high coverage (R^2 >= 0.9) for the given data. Consider changing input parameters.')
+        print('Could not create model with high coverage (Mean Absolute Percentage Error (MAPE) < 5 and R_squared >= 0.60) for the given data. Consider changing input parameters.')
         
-    return model_to_pickle, best_mse, best_r2
+    return model_to_pickle, best_mse, best_r2, best_mape
+
 
 def Make_Pickle(model_to_pickle, interval, ticker, start_date, end_date):
 
@@ -402,10 +382,10 @@ def Make_Predictions(ticker, start_date, end_date):
         # Split the data into training and testing sets.
         X_train, X_test, y_train, y_test = Split_train_test(df_cleaned, Target)
         # Identify and save the best model for the interval.
-        model_to_pickle, best_mse, best_r2 = Save_Best_Model(X_train, X_test, y_train, y_test)
+        model_to_pickle, best_mse, best_r2, best_mape = Save_Best_Model(X_train, X_test, y_train, y_test)
         # Check if a model was selected to be pickled before attempting to pickle it.
         if model_to_pickle:
-            print(f'Best model selected for {ticker} for predicting {interval} days ahead, with MSE = {best_mse} and Rsquared = {best_r2}')
+            print(f'Best model selected for {ticker} for predicting {interval} days ahead, with MSE = {best_mse} , Rsquared = {best_r2} and best_mape = {best_mape}')
             Make_Pickle(model_to_pickle, interval, ticker, start_date, end_date)
         else:
             print(f"No suitable model found for interval {interval} to pickle.")
