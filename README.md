@@ -1,58 +1,72 @@
-Stock Price Prediction Pipeline README
-Overview
-This Python-based project offers a robust pipeline for stock market analysis, focusing on predicting future stock prices. Leveraging the yfinance library for historical stock data, it encompasses detailed data preparation, sophisticated feature engineering, and the application of multiple machine learning models. The pipeline is designed to be modular, with distinct components for data handling and model training, accompanied by a user-friendly script for interaction.
+# Stock Price Prediction Pipeline README
 
-Installation
-Before starting, ensure Python 3.x is installed on your machine. This project requires several external libraries, which can be installed using the following command:
+## Overview
+This Python-based project provides a comprehensive pipeline for stock market analysis, focusing on predicting future stock prices. Utilizing the `yfinance` library for historical stock data, the pipeline includes extensive data preparation, advanced feature engineering, and the deployment of various machine learning models. It's designed with modularity in mind, featuring separate components for data management and model training, alongside an intuitive script for user interaction. For additional details and deeper insights about this project, please explore the Jupyter notebooks.
+
+## Installation
+Ensure Python 3.x is installed on your system. The project depends on multiple external libraries, installable via:
 
 bash
 pip install pandas numpy yfinance scikit-learn xgboost statsmodels pickle-mixin
-Project Structure
-Data Preparation (Data_Preparation.py)
-Purpose: Automates the retrieval and initial processing of stock data, including cleaning and feature engineering.
-Functions:
-Collect_Stock_Data: Fetches historical data from Yahoo Finance.
-Clean_NaN_Values: Cleans datasets by handling missing values appropriately.
-Calculate_Adjusted_Price: Adjusts stock prices for dividends and splits.
-Technical indicators calculation: Includes RSI, MACD, and Bollinger Bands.
-Engineer_Features: Enhances data with engineered features for improved model performance.
-Key Benefits: Streamlines the often cumbersome process of data preparation, ensuring datasets are clean, comprehensive, and ready for modeling.
-Modeling (Modeling.py)
-Purpose: Constructs and evaluates predictive models, selecting the best performer for future predictions.
-Features:
-Multiple regression models: Linear Regression, OLS, XGBoost, Random Forest.
-Model_with_*: Functions for each model type, encapsulating the training and evaluation process.
-Save_Best_Model: Compares models based on Mean Squared Error (MSE) and R-squared metrics, selecting the best.
-Make_Pickle: Serializes the best model for later use, facilitating easy prediction on new data.
-Key Benefits: Offers flexibility in model choice and ensures the selection of the most accurate model for the data at hand.
-Main Script
-Purpose: Provides an interactive interface for the user to either train new models or make predictions using pre-trained models.
-Functionality:
-action1: Guides users through training models on chosen stock tickers and date ranges.
-action2: Allows users to select a pre-trained model and make predictions.
-User Interaction: Designed to be intuitive, prompting users at each step to input their choices, ensuring a seamless experience even for those less familiar with stock market analysis or machine learning.
-Usage
-To Train Models:
 
-Execute the main script: python main.py
-Select option 1 when prompted.
-Enter the stock ticker(s) and the desired date range as instructed.
-The pipeline will automatically process the data, train multiple models, and save the best-performing model for each prediction interval.
-To Make Predictions:
 
-Run the main script: python main.py
-Choose option 2 when prompted.
-Follow the prompts to select from available pre-trained models.
-The script will use the selected model to predict future stock prices based on the most recent data.
-Contributing
-We warmly welcome contributions, whether they be in the form of bug fixes, feature additions, or documentation improvements. To contribute:
+## Project Structure
 
-Fork the repository.
-Create a new branch for your changes.
-Submit a pull request with a clear description of your modifications.
-License
-Distributed under the MIT License. See LICENSE for more information.
+### Data Preparation (`Data_Preparation.py`)
+**Purpose:** Simplifies the retrieval and initial processing of stock data, including data cleaning and feature engineering.
 
-Acknowledgments
-Data provided by Yahoo Finance through the yfinance library.
-All the open-source projects and libraries that made this project possible.
+**Functions:**
+- `Collect_Stock_Data`: Fetches historical data from Yahoo Finance.
+- `Clean_NaN_Values`: Cleans data by addressing missing values.
+- `Calculate_Adjusted_Price`: Adjusts stock prices for dividends and splits.
+- `Technical Indicators Calculation`: Computes RSI, MACD, and Bollinger Bands.
+- `Engineer_Features`: Adds engineered features to enhance model performance.
+
+**Key Benefits:** Makes data preparation less tedious, ensuring datasets are clean, comprehensive, and modeling-ready.
+
+### Modeling (`Modeling.py`)
+**Purpose:** Builds and assesses predictive models, selecting the most accurate for future predictions.
+
+**Features:**
+- Multiple regression models: Linear Regression, OLS, XGBoost, Random Forest.
+- `Model_with_*`: Specific functions for each model, covering training and evaluation.
+- `Save_Best_Model`: Determines the best model based on MSE and R-squared metrics.
+- `Make_Pickle`: Serializes the top model for future use, allowing predictions on new data.
+
+**Key Benefits:** Facilitates flexible model selection, ensuring optimal accuracy.
+
+### Main Script
+**Purpose:** Offers an interactive interface for training models or making predictions with pre-trained ones.
+
+**Functionality:**
+- `action1`: Assists users in training models with selected stock tickers and date ranges.
+- `action2`: Enables predictions using available pre-trained models.
+
+**User Interaction:** Designed for ease of use, with prompts guiding users through each step.
+
+## Usage
+
+### To Train Models:
+1. Execute the main script: `python Main.py`
+2. Choose option 1 as prompted.
+3. Input stock ticker(s) and date range as directed. The pipeline processes the data, trains models, and saves the best for each prediction interval.
+
+### To Make Predictions:
+1. Run the main script: `python Main.py`
+2. Select option 2 when prompted.
+3. Follow instructions to choose a pre-trained model for future stock price predictions.
+
+## Contributing
+Contributions are encouraged, whether bug fixes, features, or documentation improvements.
+
+1. Fork the repository.
+2. Create a new branch for your changes.
+3. Submit a pull request with a detailed description of your changes.
+
+## Blog Post
+Here is the link to the blog post related to this analysis: https://shorturl.at/dkINV
+
+## Acknowledgments
+- My heartfelt gratitude to the Udacity organization for providing me with the opportunity to tackle this fascinating problem.
+- Data sourced from Yahoo Finance via the `yfinance` library.
+- Gratitude to all open-source projects and libraries enabling this work.
