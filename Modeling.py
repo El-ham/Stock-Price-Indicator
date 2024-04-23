@@ -8,6 +8,9 @@ import statsmodels.api as sm
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 import pickle
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import GridSearchCV
+
 
 def Read_Data(ticker, start_date, end_date):
 
@@ -125,9 +128,12 @@ def Model_with_LR(X_train, X_test, y_train, y_test):
     """
     Initializes, fits, and evaluates a Linear Regression model using the provided training and testing datasets.
     
-    This function creates a Linear Regression model, fits it to the training data, and then uses the model
-    to make predictions on the testing set. It evaluates the performance of the model by calculating the
-    Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE) and the R-squared (R2) score between the actual and predicted values for the target.
+
+    This function creates a Ridge Regression model, leveraging Grid Search with Cross Validation to optimize the 
+    regularization strength (alpha). The model is fitted to the training data, and then predictions are made on the 
+    testing set. The performance is evaluated using the Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE), 
+    and R-squared (R2) score, assessing how well the actual outcomes are predicted.
+    
     
     Parameters:
     - X_train (pd.DataFrame): The training dataset containing the features.
@@ -136,16 +142,40 @@ def Model_with_LR(X_train, X_test, y_train, y_test):
     - y_test (pd.Series): The testing dataset containing the target variable.
     
     Returns:
-    - tuple: Contains the fitted Linear Regression model, the MSE, MAPE, and the R2 score.
+    - tuple: Contains the fitted model using GridSearchCV, MSE, MAPE, and the R2 score.
     """
+
+
+    # Define the parameter grid for Ridge Regression
+    param_grid = {
+        'alpha': [0.1, 1, 10, 100]
+    }
     
-    # Initialize the Linear Regression model.
-    LR = LinearRegression()
-    # Fit the model to the training data.
+    # Initialize Ridge Regression model
+    model = Ridge()
+    
+    # Initialize GridSearchCV
+    LR = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1)
     LR.fit(X_train, y_train)
     
+    best_LR_model = LR.best_estimator_
+    
+    # Extract best hyperparameters from the XGBoost model
+    best_LR_params = best_LR_model.get_params()
+    
+    # Map XGBoost parameters to Random Forest parameters
+    LR_params = {
+        'alpha': best_LR_params['alpha'],
+        }
+    
+    # Train Random Forest model with the mapped hyperparameters
+    best_LR_model = Ridge(**LR_params)
+    best_LR_model.fit(X_train, y_train)
+    
+    bst_prmt = best_LR_model.get_params()
+    
     # Use the fitted model to make predictions on the test dataset.
-    y_pred = LR.predict(X_test)
+    y_pred = best_LR_model.predict(X_test)
     
     # Evaluate the model's performance by calculating the Mean Squared Error and R-squared score.
     mse = mean_squared_error(y_test, y_pred)
@@ -155,20 +185,24 @@ def Model_with_LR(X_train, X_test, y_train, y_test):
     absolute_percentage_differences = np.abs((y_test - y_pred) / y_test) * 100
     # Calculate the mean of these absolute percentage differences
     mape = np.mean(absolute_percentage_differences)
-
-    return LR, mse, r2, mape
+    
+    
+    return best_LR_model, mse, r2, mape, bst_prmt
 
 
 def Model_with_XGB(X_train, X_test, y_train, y_test):
 
     """
-    Initializes, fits, and evaluates an XGBoost regression model.
+    Initializes, fits, and evaluates an XGBoost regression model with optimized hyperparameters through Grid Search and Cross-Validation.
     
-    This function creates an XGBoost regression model with specified hyperparameters, fits it to the 
-    training data, and uses it to make predictions on the testing set. It evaluates the model's performance
-    by calculating the Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE) and R-squared (R2) score between the actual and predicted
-    values for the target variable.
-    
+
+    This function sets up an XGBoost regression model and uses Grid Search with 3-fold Cross-Validation to systematically explore a range 
+    of hyperparameters including the number of estimators, learning rate, max depth, and subsample ratio. It aims to identify
+    the optimal settings by minimizing the negative mean squared error. The model, once fitted with the best parameters, is then used to 
+    predict on the test dataset. Performance metrics calculated include Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE), 
+    and R-squared (R2), providing insights into the accuracy and predictive quality of the model.
+
+
     Parameters:
     - X_train (pd.DataFrame): The training dataset containing the features.
     - X_test (pd.DataFrame): The testing dataset containing the features.
@@ -178,15 +212,43 @@ def Model_with_XGB(X_train, X_test, y_train, y_test):
     Returns:
     - tuple: Contains the fitted XGBoost model, the MSE, MAPE, and the R2 score.
     """
-    
-    # Initialize the XGBoost regressor model with specified hyperparameters.
-    xgb_model = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
 
-    # Fit the XGBoost model to the training data.
+    # Define the parameter grid for hyperparameter tuning
+    param_grid = {
+        'n_estimators': [100, 200, 300],
+        'learning_rate': [0.03, 0.1, 0.3],
+        'max_depth': [3, 6, 8],
+        'subsample': [0.8, 0.9, 1.0]
+    }
+
+    # Initialize the XGBoost regressor model
+    xgb = XGBRegressor(random_state=42)
+
+    # Initialize GridSearchCV with the parameter grid and fit it to the training data
+    xgb_model = GridSearchCV(estimator=xgb, param_grid=param_grid, cv=3, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1)
     xgb_model.fit(X_train, y_train)
+
+    best_xgb_model = xgb_model.best_estimator_
+
+
+    # Extract best hyperparameters from the XGBoost model
+    best_xgb_params = best_xgb_model.get_params()
     
+    # Map XGBoost parameters to Random Forest parameters
+    xgb_params = {
+        'n_estimators': best_xgb_params['n_estimators'],
+        'learning_rate': best_xgb_params['learning_rate'],
+        'max_depth': best_xgb_params['max_depth'],
+        'subsample': best_xgb_params['subsample']
+    }
+    
+    # Train Random Forest model with the mapped hyperparameters
+    best_xgb_model = XGBRegressor(**xgb_params)
+    best_xgb_model.fit(X_train, y_train)
+    bst_prmt = best_xgb_model.get_params()
+
     # Use the trained model to make predictions on the test dataset.
-    xgb_pred = xgb_model.predict(X_test)
+    xgb_pred = best_xgb_model.predict(X_test)
     
     # Evaluate the model's performance on the test data using Mean Squared Error and R-squared metrics.
     xgb_mse = mean_squared_error(y_test, xgb_pred)
@@ -197,18 +259,22 @@ def Model_with_XGB(X_train, X_test, y_train, y_test):
     # Calculate the mean of these absolute percentage differences
     mape = np.mean(absolute_percentage_differences)
 
-    return xgb_model, xgb_mse, xgb_r2, mape
+    
+    return best_xgb_model, xgb_mse, xgb_r2, mape, bst_prmt
     
 
 def Model_with_RF(X_train, X_test, y_train, y_test):
 
     """
-    Initializes, fits, and evaluates a Random Forest regression model.
+    Initializes, fits, and evaluates a Random Forest regression model with optimized hyperparameters through Grid Search and Cross-Validation.
     
-    This function creates a Random Forest regression model with default hyperparameters, fits it to the
-    training data, and uses it to make predictions on the testing set. It evaluates the model's performance
-    by calculating the Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE) and R-squared (R2) score between the actual and predicted
-    values for the target variable.
+    This function sets up a Random Forest regression model and applies Grid Search with 3-fold Cross-Validation
+    to systematically explore various combinations of hyperparameters such as the number of trees (n_estimators), 
+    tree depth (max_depth), and minimum samples required at a leaf node (min_samples_leaf) and a split (min_samples_split). 
+    This rigorous approach aims to pinpoint the most effective settings to minimize the negative mean squared error. 
+    After identifying the best parameters, the model is fitted to the training data and used for predictions on the testing set. 
+    The model's effectiveness is assessed by calculating the Mean Squared Error (MSE), Mean Absolute Percentage Error (MAPE), 
+    and R-squared (R2) score, offering insights into both the precision and the predictive power of the model.
     
     Parameters:
     - X_train (pd.DataFrame): The training dataset containing the features.
@@ -219,13 +285,48 @@ def Model_with_RF(X_train, X_test, y_train, y_test):
     Returns:
     - tuple: Contains the fitted Random Forest model, the MSE, MAPE, and the R2 score.
     """
-    
-    # Initialize and fit the Random Forest regressor model to the training data.
-    rf_model = RandomForestRegressor()
+
+
+    # Define the parameter grid
+    param_grid = {
+        'n_estimators': [100, 200, 300],
+        'max_depth': [None, 10, 20, 30],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4]
+    }
+
+    # Initialize the Random Forest regressor model
+    rf = RandomForestRegressor()
+
+    # Initialize GridSearchCV with the parameter grid and fit it to the training data
+    rf_model = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1)
     rf_model.fit(X_train, y_train)
+
+    best_rf_model = rf_model.best_estimator_
+
+
+
+    # Extract best hyperparameters from the XGBoost model
+    best_rf_params = best_rf_model.get_params()
+    
+    # Map XGBoost parameters to Random Forest parameters
+    rf_params = {
+        'n_estimators': best_rf_params['n_estimators'],
+        'max_depth': best_rf_params['max_depth'],
+        'min_samples_split': best_rf_params['min_samples_split'],
+        'min_samples_leaf': best_rf_params['min_samples_leaf']
+    }
+    
+    # Train Random Forest model with the mapped hyperparameters
+    best_rf_model = RandomForestRegressor(**rf_params)
+
+    # Use the best estimator to make predictions on the test dataset
+    best_rf_model.fit(X_train, y_train)
+
+    bst_prmt = best_rf_model.get_params()
     
     # Use the trained model to make predictions on the test dataset.
-    y_pred_rf = rf_model.predict(X_test)
+    y_pred_rf = best_rf_model.predict(X_test)
     
     # Evaluate the model's performance on the test data using Mean Squared Error and R-squared metrics.
     mse_rf = mean_squared_error(y_test, y_pred_rf)
@@ -236,13 +337,14 @@ def Model_with_RF(X_train, X_test, y_train, y_test):
     # Calculate the mean of these absolute percentage differences
     mape = np.mean(absolute_percentage_differences)
 
-    return rf_model, mse_rf, r2_rf, mape
+    
+    return best_rf_model, mse_rf, r2_rf, mape, bst_prmt
 
 def Save_Best_Model(X_train, X_test, y_train, y_test):
 
     """
     Evaluates multiple regression models on the given dataset, identifies the best performing model based on
-    mean squared error (MSE), Mean Absolute Percentage Error (MAPE) and R-squared (R2) metrics, and pickles the best model if its mape<= 5 and R2 score>= 0.60.
+    mean squared error (MSE) and R-squared (R2) metrics, and pickles the best model if its R2 score is above 0.90.
     
     The function considers Linear Regression, XGBoost, and Random Forest models, comparing their performance
     on the given training and testing datasets. The best model is determined by the lowest MSE, with a tiebreaker
@@ -276,7 +378,7 @@ def Save_Best_Model(X_train, X_test, y_train, y_test):
     }
 
     # Evaluate each model, updating the best model based on MSE and R2.
-    for model_name, (model, mse, r2, mape) in models.items():
+    for model_name, (model, mse, r2, mape, bst_prmt) in models.items():
 
         # Check if the current model has better performance than the best model found so far
         if mse < best_mse:
@@ -284,6 +386,7 @@ def Save_Best_Model(X_train, X_test, y_train, y_test):
             best_mse = mse
             best_r2 = r2
             best_mape = mape
+            best_parameters = bst_prmt
             
     # Conditionally choose the best model if its performance is sufficiently high.
     if best_mape<= 5 and best_r2>= 0.60:
@@ -298,7 +401,8 @@ def Save_Best_Model(X_train, X_test, y_train, y_test):
     else:
         print('Could not create model with high coverage (Mean Absolute Percentage Error (MAPE) < 5 and R_squared >= 0.60) for the given data. Consider changing input parameters.')
         
-    return model_to_pickle, best_mse, best_r2, best_mape
+    return model_to_pickle, best_mse, best_r2, best_mape, best_parameters
+
 
 
 def Make_Pickle(model_to_pickle, interval, ticker, start_date, end_date):
@@ -346,6 +450,7 @@ def Make_Pickle(model_to_pickle, interval, ticker, start_date, end_date):
         # Catch any other unexpected exceptions and print an error message detailing the problem.
         print(f"An unexpected error occurred: {e}")
 
+
 def Make_Predictions(ticker, start_date, end_date):
 
     """
@@ -382,11 +487,10 @@ def Make_Predictions(ticker, start_date, end_date):
         # Split the data into training and testing sets.
         X_train, X_test, y_train, y_test = Split_train_test(df_cleaned, Target)
         # Identify and save the best model for the interval.
-        model_to_pickle, best_mse, best_r2, best_mape = Save_Best_Model(X_train, X_test, y_train, y_test)
+        model_to_pickle, best_mse, best_r2, best_mape, best_parameters = Save_Best_Model(X_train, X_test, y_train, y_test)
         # Check if a model was selected to be pickled before attempting to pickle it.
         if model_to_pickle:
-            print(f'Best model selected for {ticker} for predicting {interval} days ahead, with MSE = {best_mse} , Rsquared = {best_r2} and best_mape = {best_mape}')
+            print(f'Best model selected for {ticker} for predicting {interval} days ahead, with MSE = {best_mse} , Rsquared = {best_r2}, best_mape = {best_mape} and best_hyperparameters ={best_parameters}')
             Make_Pickle(model_to_pickle, interval, ticker, start_date, end_date)
         else:
             print(f"No suitable model found for interval {interval} to pickle.")
-
