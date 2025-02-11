@@ -64,7 +64,7 @@ Contributions are encouraged, whether bug fixes, features, or documentation impr
 3. Submit a pull request with a detailed description of your changes.
 
 ## Blog Post
-Here is the link to the blog post related to this analysis: https://github.com/El-ham/Stock-Price-Indicator
+Here is the link to the blog post related to this analysis: https://medium.com/@e.nabipoor/predicting-the-future-a-journey-through-stock-price-forecasting-with-python-f97b95fcfb36
 
 ## Acknowledgments
 - My heartfelt gratitude to the Udacity organization for providing me with the opportunity to tackle this fascinating problem.
