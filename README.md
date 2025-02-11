@@ -64,7 +64,7 @@ Contributions are encouraged, whether bug fixes, features, or documentation impr
 3. Submit a pull request with a detailed description of your changes.
 
 ## Blog Post
-Here is the link to the blog post related to this analysis: https://shorturl.at/dkINV
+Here is the link to the blog post related to this analysis: https://github.com/El-ham/Stock-Price-Indicator
 
 ## Acknowledgments
 - My heartfelt gratitude to the Udacity organization for providing me with the opportunity to tackle this fascinating problem.
